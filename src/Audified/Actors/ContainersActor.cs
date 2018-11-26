@@ -10,16 +10,17 @@ namespace Audified
 {
     public class ContainersActor : ReceiveActor
     {
-        private readonly DockerClient client;
+        private readonly IDockerClient client;
+        private readonly IActorRef collector;
 
-        public ContainersActor(DockerClient client)
+        public ContainersActor(IDockerClient client)
         {
             this.client = client;
 
             Receive<ListContainers.Request>(message => Handle(message));
         }
 
-        public static Props GetProps(DockerClient client) =>
+        public static Props GetProps(IDockerClient client) =>
             Props.Create<ContainersActor>(() => new ContainersActor(client));
 
         private void Handle(ListContainers.Request message)

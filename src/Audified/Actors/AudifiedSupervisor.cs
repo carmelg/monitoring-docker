@@ -7,6 +7,7 @@ namespace Audified
 {
     public class AudifiedSupervisor : ReceiveActor
     {
+        private IDockerClient client;
         private IActorRef containers;
 
         public AudifiedSupervisor()
@@ -23,16 +24,19 @@ namespace Audified
         protected override void PreStart()
         {
             var localhost = new Uri("unix:///var/run/docker.sock");
-            var client = new DockerClientConfiguration(localhost)
+            client = new DockerClientConfiguration(localhost)
                 .CreateClient();
 
             containers = Context.ActorOf(ContainersActor.GetProps(client), "containers");
 
-            Context.System.Scheduler.ScheduleTellOnce(
-                delay: TimeSpan.FromSeconds(1),
-                receiver: containers,
-                message: new ListContainers.Request(),
-                sender: Self);
+            Context.System.Scheduler
+                .ScheduleTellRepeatedly(
+                    initialDelay: TimeSpan.FromSeconds(1),
+                    interval: TimeSpan.FromSeconds(5),
+                    receiver: containers,
+                    message: new ListContainers.Request(),
+                    sender: Self
+                );
         }
     }
 }
