@@ -6,12 +6,11 @@ using Audified.Messages;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace Audified
+namespace Audified.Actors
 {
     public class ContainersActor : ReceiveActor
     {
         private readonly IDockerClient client;
-        private readonly IActorRef collector;
 
         public ContainersActor(IDockerClient client)
         {

@@ -1,9 +1,10 @@
 using System;
+using System.Linq;
 using Akka.Actor;
 using Audified.Messages;
 using Docker.DotNet;
 
-namespace Audified
+namespace Audified.Actors
 {
     public class AudifiedSupervisor : ReceiveActor
     {
@@ -17,8 +18,11 @@ namespace Audified
 
         private void Handle(ListContainers.Response message)
         {
-            foreach (var id in message.ContainersId)
-                Console.WriteLine(id);
+            var newContainersId = message.ContainersId
+                .Where(x => Context.Child(x) == Nobody.Instance);
+
+            foreach (var newContainerId in newContainersId)
+                Context.ActorOf(ContainerActor.GetProps(client), newContainerId);
         }
 
         protected override void PreStart()
