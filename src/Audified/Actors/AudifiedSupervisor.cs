@@ -9,7 +9,7 @@ namespace Audified.Actors
     public class AudifiedSupervisor : ReceiveActor
     {
         private IDockerClient client;
-        private IActorRef containers;
+        private IActorRef store;
 
         public AudifiedSupervisor()
         {
@@ -22,7 +22,7 @@ namespace Audified.Actors
                 .Where(x => Context.Child(x) == Nobody.Instance);
 
             foreach (var newContainerId in newContainersId)
-                Context.ActorOf(ContainerActor.GetProps(client), newContainerId);
+                Context.ActorOf(ContainerActor.GetProps(client, store), newContainerId);
         }
 
         protected override void PreStart()
@@ -31,7 +31,8 @@ namespace Audified.Actors
             client = new DockerClientConfiguration(localhost)
                 .CreateClient();
 
-            containers = Context.ActorOf(ContainersActor.GetProps(client), "containers");
+            var containers = Context.ActorOf(ContainersActor.GetProps(client), "containers");
+            store = Context.ActorOf<ElasticSearchActor>("store");
 
             Context.System.Scheduler
                 .ScheduleTellRepeatedly(
@@ -42,7 +43,6 @@ namespace Audified.Actors
                     sender: Self
                 );
 
-            Context.ActorOf<ElasticSearchActor>("store");
         }
     }
 }

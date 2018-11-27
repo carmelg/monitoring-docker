@@ -16,40 +16,28 @@ namespace Audified.Actors
             var settings = new ConnectionSettings(node);
             client = new ElasticClient(settings);
 
-            Receive<StoreData<Payload>>(message => Handle(message));
+            Receive<StoreInspectContainerData>(message => Handle(message));
         }
 
-        private void Handle(StoreData<Payload> message)
+        private void Handle(StoreInspectContainerData message)
         {
-            Console.WriteLine("Indexing data...");
-            var response = client.Index(message.Payload, x => x.Index("persons").Type("persons"));
-            Console.WriteLine($"Index result: {response.Result}");
-        }
-
-        protected override void PreStart()
-        {
-            var payload = new Payload
+            var document = new Document
             {
-                Id = "1",
-                Firstname = "Martijn",
-                Lastname = "Laarman"
+                Id = message.Id,
+                Name = message.Name,
+                Image = message.Image,
+                IsRunning = message.IsRunning
             };
 
-            Context.System.Scheduler
-                .ScheduleTellRepeatedly(
-                    initialDelay: TimeSpan.FromSeconds(1),
-                    interval: TimeSpan.FromSeconds(5),
-                    receiver: Self,
-                    message: new StoreData<Payload>(payload),
-                    sender: Self
-                );
+            client.Index(document, x => x.Index("containers").Type("containers"));
         }
 
-        public class Payload
+        private class Document
         {
             public string Id { get; set; }
-            public string Firstname { get; set; }
-            public string Lastname { get; set; }
+            public string Name { get; set; }
+            public string Image { get; set; }
+            public bool IsRunning { get; set; }
         }
     }
 }

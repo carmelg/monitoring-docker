@@ -8,38 +8,33 @@ namespace Audified.Actors
     public class ContainerActor : ReceiveActor
     {
         private readonly IDockerClient client;
+        private readonly IActorRef store;
 
-        public ContainerActor(IDockerClient client)
+        public static Props GetProps(IDockerClient client, IActorRef store) =>
+            Props.Create<ContainerActor>(() => new ContainerActor(client, store));
+
+        public ContainerActor(IDockerClient client, IActorRef store)
         {
             this.client = client;
+            this.store = store;
 
-            Receive<InspectContainer.Request>(message => Handle(message));
-            Receive<InspectContainer.Response>(message => Handle(message));
+            Receive<InspectContainer>(message => Handle(message));
         }
 
-        private void Handle(InspectContainer.Request request)
+        private void Handle(InspectContainer message)
         {
             client.Containers
-                .InspectContainerAsync(request.ContainerId)
+                .InspectContainerAsync(message.ContainerId)
                 .PipeTo(
-                    recipient: Self,
+                    recipient: store,
                     sender: Self,
-                    success: response => new InspectContainer.Response(
+                    success: response => new StoreInspectContainerData(
                         id: response.ID,
                         name: response.Name,
                         image: response.Image,
                         isRunning: response.State.Running
                     )
                 );
-        }
-
-        public static Props GetProps(IDockerClient client) =>
-            Props.Create<ContainerActor>(() => new ContainerActor(client));
-
-        private void Handle(InspectContainer.Response message)
-        {
-            Console.WriteLine($"{message.Name} // {message.Image} // {message.IsRunning}");
-            Console.WriteLine("**********************************************************");
         }
 
         protected override void PreStart()
@@ -51,7 +46,7 @@ namespace Audified.Actors
                     initialDelay: TimeSpan.FromSeconds(1),
                     interval: TimeSpan.FromSeconds(5),
                     receiver: Self,
-                    message: new InspectContainer.Request(containerId),
+                    message: new InspectContainer(containerId),
                     sender: Self
                 );
         }
