@@ -41,6 +41,8 @@ namespace Audified.Actors
                     message: new ListContainers.Request(),
                     sender: Self
                 );
+
+            Context.ActorOf<ElasticSearchActor>("store");
         }
     }
 }
