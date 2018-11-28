@@ -10,10 +10,16 @@ namespace Floatc.Actors
 
         public FloatcSupervisor()
         {
-            Receive<GetQueueMessage.Response>(message =>
+            Receive<GetQueueMessage.Response>(message => Handle(message));
+        }
+
+        private void Handle(GetQueueMessage.Response message)
+        {
+            if (message.Count > 100)
             {
-                Console.WriteLine(message.Count);
-            });
+                var actor = Context.ActorOf<ContainerManagementActor>();
+                actor.Tell(new AddContainerInstance());
+            }
         }
 
         protected override void PreStart()
