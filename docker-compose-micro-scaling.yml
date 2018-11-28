@@ -4,6 +4,10 @@ services:
     build: ./src/Floatc.Producer
     depends_on:
     - broker
+  consumer:
+    build: ./src/Floatc.Consumer
+    depends_on:
+    - broker
   broker:
     image: "rabbitmq:3.7.8-management"
     ports:
