@@ -1,0 +1,10 @@
+version: '3'
+services:
+  producer:
+    build: ./src/Floatc.Producer
+    depends_on:
+    - broker
+  broker:
+    image: "rabbitmq:3.7.8-management"
+    ports:
+    - "15672:15672"
